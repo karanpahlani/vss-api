@@ -1,11 +1,13 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-
+const bcrypt = require('bcrypt-nodejs');
+const cors = require('cors');
 
 
 const app = express();
 
 app.use(bodyParser.json());
+app.use(cors());
 
 const database = {
     users: [
@@ -34,6 +36,7 @@ app.get('/', (req, res) =>{
     res.send(database.users)
 
 })
+
 app.get('/profile/:id', (req, res)=>{
     const { id } = req.params;
     let found = false;
@@ -60,6 +63,17 @@ app.post('/signin', (req,res) =>{
 
 app.post('/register', (req,res) =>{
     const {email, name ,password } = req.body;
+    bcrypt.hash(password, null, null, function(err,hash) {
+            console.log(hash);
+    });
+
+    bcrypt.compare('apples', '$2a$10$0fJdraeTa1/S8O0fc/Wzt.Mf9hRFhkFOC1XZsN4yROl9B1VnY/jhG', function(err, res) {
+        console.log('first guess:',res)
+    });
+    bcrypt.compare('banannas' , '$2a$10$0fJdraeTa1/S8O0fc/Wzt.Mf9hRFhkFOC1XZsN4yROl9B1VnY/jhG', function(err, res) {
+        console.log('sec guess:', res)
+    });
+
     database.users.push({
         id:'125',
         name: name,
