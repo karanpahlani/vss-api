@@ -2,7 +2,21 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt-nodejs');
 const cors = require('cors');
+const knex = require('knex')
 
+const db = knex({
+    client: 'pg',
+    connection: {
+        host : '127.0.0.1',
+        user: 'karan',
+        password: '',
+        database: 'VSS'
+    }
+});
+
+db.select('*').from('passenger').then(data => {
+        console.log(data);
+    });
 
 const app = express();
 
@@ -15,7 +29,7 @@ const database = {
             id:'123',
             name: 'Jhon',
             email: 'jhon@gmail.com',
-            password: 'cookies',
+            password: 'co',
             entries: 0,
             joined: new Date()
         },
@@ -55,35 +69,28 @@ app.get('/profile/:id', (req, res)=>{
 app.post('/signin', (req,res) =>{
     if(req.body.email === database.users[0].email &&
         req.body.password === database.users[0].password){
-        res.json('success');
+        res.json(database.users[0]);
     } else{
         res.status(400).json('error logging in');
     }
 })
 
 app.post('/register', (req,res) =>{
-    const {email, name ,password } = req.body;
-    bcrypt.hash(password, null, null, function(err,hash) {
-            console.log(hash);
-    });
+    const {email, name ,address, phone } = req.body;
 
-    bcrypt.compare('apples', '$2a$10$0fJdraeTa1/S8O0fc/Wzt.Mf9hRFhkFOC1XZsN4yROl9B1VnY/jhG', function(err, res) {
-        console.log('first guess:',res)
-    });
-    bcrypt.compare('banannas' , '$2a$10$0fJdraeTa1/S8O0fc/Wzt.Mf9hRFhkFOC1XZsN4yROl9B1VnY/jhG', function(err, res) {
-        console.log('sec guess:', res)
-    });
-
-    database.users.push({
-        id:'125',
-        name: name,
-        email: email,
-        password: password,
-        entries: 0,
-        joined: new Date()
-
+    db('passenger')
+        .returning('*')
+        .insert({
+            email: email,
+            name: name,
+            address: address,
+            phone: phone,
+            joined: new Date()
     })
-    res.json(database.users[database.users.length - 1]);
+        .then(user =>{
+            res.json(user[0]);
+    })
+        .catch(err => res.status(400).json('unable to register'))
 })
 
 
