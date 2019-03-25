@@ -28,7 +28,7 @@ const database = {
         {
             id:'123',
             name: 'Jhon',
-            email: 'jhon@gmail.com',
+            email: 'jhon',
             password: 'co',
             entries: 0,
             joined: new Date()
