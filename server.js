@@ -57,14 +57,25 @@ app.post('/signin', (req,res) =>{
                     .where('email', '=', req.body.email)
                     .then(user => {
                         console.log(user);
-                        res.json(user[0])
+                        var result = {
+                            loggedIn : true,
+                            userData: user[0]
+                        }
+                        res.json(result);
                     })
                     .catch(err => res.status(400).json('unable to get user'))
             } else {
-                res.status(400).json('wrong credentials')
+                var result = {
+                    loggedIn: false,
+                    reason: 'wrong credentials'
+                }
+                res.status(400).json(result);
             }
         })
-        .catch(err => res.status(400).json('wrong credentials'))
+        .catch(err => res.status(400).json({
+            loggedIn: false,
+            reason: 'wrong credentials'
+        }))
 })
 
 
