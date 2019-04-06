@@ -55,16 +55,24 @@ app.post('/signin', (req,res) =>{
             if(isValid){
                 if(data[0].type === "passenger") {
                     console.log("trying to login as passenger")
-                    return db.select('*').from('passenger')
+                    db.select('*').from('passenger')
                         .where('email', '=', req.body.email)
                         .then(user => {
                             console.log(user);
-                            var result = {
-                                loggedIn: true,
-                                userData: user[0],
-                                type: 'passenger'
-                            }
-                            res.json(result);
+                            db.select('routename').from('route')
+                                .where('routeid', '=' ,user[0].activeride)
+                                .then( routename=>{
+                                    var result = {
+                                        loggedIn: true,
+                                        userData: user[0],
+                                        type: 'passenger',
+                                        routename: routename[0].routename
+                                    }
+                                    res.json(result);
+                                })
+
+
+
                         })
                         .catch(err => res.status(400).json('unable to get user'))
 
