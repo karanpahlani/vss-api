@@ -188,7 +188,22 @@ app.post('/register', (req,res) =>{
        }
 })
 
+app.post('/createRoute', (req,res) =>{
+    const { route } = req.body;
 
+    console.log("attempting to create route: " + route)
+    db.transaction(trx => {
+        trx.insert({
+            routename: route
+        })
+            .into('route')
+            .then(trx.commit)
+            .catch(trx.rollback)
+    })
+        .catch(err => res.status(400).json('unable to add route'))
+
+
+})
 
 
 app.listen(3000, ()=>{
