@@ -24,9 +24,35 @@ app.use(bodyParser.json());
 app.use(cors());
 
 
+app.post('/addride',(req,res) =>{
+    db.from('passenger').where({userid: req.body.passid}).update({activeride: req.body.route})
+        .then( user =>{
+            db.select('*').from('passenger').where({userid: req.body.passid})
+                .then(user => {
+                    console.log(user);
+                    db.select('routename').from('route')
+                        .where('routeid', '=' ,user[0].activeride)
+                        .then( routename=>{
+                            var result = {
+                                loggedIn: true,
+                                userData: user[0],
+                                type: 'passenger',
+                                routename: routename[0].routename
+                            }
+                            res.json(result);
+                        })
+                })
+        })
 
-app.get('/', (req, res) =>{
-    res.send(database.users)
+})
+
+
+app.get('/routes', (req, res) =>{
+    db.select('*').from('route')
+        .then(data=>{
+            res.json(data)
+        })
+
 
 })
 
