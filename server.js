@@ -8,15 +8,15 @@ const db = knex({
     client: 'pg',
     connection: {
         host : '127.0.0.1',
-        user: 'karan',
-        password: '',
+        user: 'postgres',
+        password: '123',
         database: 'VSS'
     }
 });
 
 db.select('*').from('passenger').then(data => {
-        console.log(data);
-    });
+    console.log(data);
+});
 
 const app = express();
 
@@ -101,13 +101,13 @@ app.get('/profile/:id', (req, res)=>{
     const { id } = req.params;
 
     db.select('*').from('passenger').where({userid: id})
-    .then(user => {
-        if(user.length) {
-            res.json(user[0])
-        }else{
-            res.status(400).json('Not Found')
-        }
-    })
+        .then(user => {
+            if(user.length) {
+                res.json(user[0])
+            }else{
+                res.status(400).json('Not Found')
+            }
+        })
 
 })
 
@@ -158,6 +158,20 @@ app.post('/signin', (req,res) =>{
                         })
                         .catch(err => res.status(400).json('unable to get user'))
 
+                } else if (data[0].type === "admin"){
+                    return db.select('*').from('admin')
+                        .where('email', '=', req.body.email)
+                        .then(user => {
+                            console.log(user);
+                            var result = {
+                                loggedIn: true,
+                                userData: user[0],
+                                type: 'admin'
+                            };
+                            res.json(result);
+                        })
+                        .catch(err => res.status(400).json('unable to get user'))
+
                 }
 
 
@@ -182,88 +196,94 @@ app.post('/register', (req,res) =>{
     const hash = bcrypt.hashSync(password);
 
 
-       if(req.body.type === "passenger") {
-           db.transaction(trx => {
-               trx.insert({
-                   hash: hash,
-                   email: email,
-                   type: type
-               })
-                   .into('login')
-                   .returning('email')
-                   .then(loginEmail => {
+    if(req.body.type === "passenger") {
+        db.transaction(trx => {
+            trx.insert({
+                hash: hash,
+                email: email,
+                type: type
+            })
+                .into('login')
+                .returning('email')
+                .then(loginEmail => {
 
-                       return trx('passenger')
-                           .returning('*')
-                           .insert({
-                               email: loginEmail[0],
-                               name: name,
-                               address: address,
-                               phone: phone,
-                               joined: new Date()
-                           })
-                           .then(user => {
+                    return trx('passenger')
+                        .returning('*')
+                        .insert({
+                            email: loginEmail[0],
+                            name: name,
+                            address: address,
+                            phone: phone,
+                            joined: new Date()
+                        })
+                        .then(user => {
 
-                               var result = {
-                                   loggedIn: true,
-                                   userData: user[0],
-                                   type: 'passenger'
-                               };
-                               res.json(result);
-                           })
-                   })
-                   .then(trx.commit)
-                   .catch(trx.rollback)
-           })
-               .catch(err => res.status(400).json('unable to register'))
-       }
-       else if(req.body.type === "driver"){
-           db.transaction(trx => {
-               trx.insert({
-                   hash: hash,
-                   email: email,
-                   type: type
-               })
-                   .into('login')
-                   .returning('email')
-                   .then(loginEmail => {
+                            var result = {
+                                loggedIn: true,
+                                userData: user[0],
+                                type: 'passenger'
+                            };
+                            res.json(result);
+                        })
+                })
+                .then(trx.commit)
+                .catch(trx.rollback)
+        })
+            .catch(err => res.status(400).json('unable to register'))
+    }
+    else if(req.body.type === "driver"){
+        db.transaction(trx => {
+            trx.insert({
+                hash: hash,
+                email: email,
+                type: type
+            })
+                .into('login')
+                .returning('email')
+                .then(loginEmail => {
 
-                       return trx('driver')
-                           .returning('*')
-                           .insert({
-                               email: loginEmail[0],
-                               name: name,
-                               address: address,
-                               phone: phone,
-                               joined: new Date()
-                           })
-                           .then(user => {
+                    return trx('driver')
+                        .returning('*')
+                        .insert({
+                            email: loginEmail[0],
+                            name: name,
+                            address: address,
+                            phone: phone,
+                            joined: new Date()
+                        })
+                        .then(user => {
 
-                               var result = {
-                                   loggedIn: true,
-                                   userData: user[0],
-                                   type: 'driver'
-                               };
-                               res.json(result);
-                           })
-                   })
-                   .then(trx.commit)
-                   .catch(trx.rollback)
-           })
-               .catch(err => res.status(400).json('unable to register'))
+                            var result = {
+                                loggedIn: true,
+                                userData: user[0],
+                                type: 'driver'
+                            };
+                            res.json(result);
+                        })
+                })
+                .then(trx.commit)
+                .catch(trx.rollback)
+        })
+            .catch(err => res.status(400).json('unable to register'))
 
-       }
+    }
 })
 
 app.post('/createRoute', (req,res) =>{
     const { route } = req.body;
 
-    console.log("attempting to create route: " + route)
+    console.log("attempting to create route: " + route);
     db.transaction(trx => {
         trx.insert({
             routename: route
         })
             .into('route')
+
+
+
+
+
+
             .then(trx.commit)
             .catch(trx.rollback)
     })
@@ -271,6 +291,65 @@ app.post('/createRoute', (req,res) =>{
 
 
 })
+
+app.post('/createStop', (req,res) =>{
+    const { stop } = req.body;
+
+    console.log("attempting to create stop: " + stop);
+    db.transaction(trx => {
+        trx.insert({
+            name: stop
+        })
+            .into('stop')
+
+            .then(user => {
+
+                const result = {
+                    loggedIn: true,
+                    userData: user[0],
+                    type: 'admin'
+                };
+                res.json(result);
+            })
+
+            .then(trx.commit)
+            .catch(trx.rollback);
+        console.log(stop + " added to stops table")
+    })
+        .catch(err => res.status(400).json('unable to add stop'))
+});
+
+app.post('/addVan', (req,res) =>{
+    const { name, van_capacity } = req.body;
+
+    console.log("attempting to add van: " + name + ", Capacity: " + van_capacity);
+    db.transaction(trx => {
+        trx.insert({
+            name: name,
+            van_capacity: van_capacity
+        })
+            .into('vans')
+
+            .then(user => {
+
+                const result = {
+                    loggedIn: true,
+                    userData: user[0],
+                    type: 'admin'
+                };
+                res.json(result);
+            })
+
+            .then(trx.commit)
+            .catch(trx.rollback);
+        console.log(name + ", Capacity: " + van_capacity + ", added to vans table")
+    })
+        .catch(err => res.status(400).json('unable to add van'))
+
+
+})
+
+
 
 
 app.listen(3000, ()=>{
