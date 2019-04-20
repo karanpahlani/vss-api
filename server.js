@@ -126,18 +126,30 @@ app.post('/signin', (req,res) =>{
                         .where('email', '=', req.body.email)
                         .then(user => {
                             console.log(user);
-                            db.select('routename').from('route')
-                                .where('routeid', '=' ,user[0].activeride)
-                                .then( routename=>{
-                                    var result = {
-                                        loggedIn: true,
-                                        userData: user[0],
-                                        type: 'passenger',
-                                        routename: routename[0].routename
-                                    }
-                                    res.json(result);
-                                })
+                           if(user[0].activeride === null)
+                           {
+                               var result = {
+                                   loggedIn: true,
+                                   userData: user[0],
+                                   type: 'passenger'
+                               }
+                               res.json(result);
+                           }
+                           else {
+                               db.select('routename').from('route')
+                                   .where('routeid', '=', user[0].activeride)
+                                   .then(routename => {
+                                       var result = {
+                                           loggedIn: true,
+                                           userData: user[0],
+                                           type: 'passenger',
+                                           routename: routename[0].routename
+                                       }
 
+
+                                       res.json(result);
+                                   })
+                           }
 
 
                         })
