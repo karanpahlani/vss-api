@@ -281,6 +281,24 @@ app.post('/register', (req,res) =>{
     }
 })
 
+app.get('/availableVans', (req,res) =>{
+
+    db.select('*').from('vans').where({available: true})
+        .then(data=>{
+            res.json(data)
+        })
+
+})
+
+app.get('/stops', (req,res) => {
+
+    db.select('*').from('stop')
+        .then(data=>{
+            res.json(data)
+        })
+
+})
+
 app.post('/createRoute', (req,res) =>{
     const { route } = req.body;
 
@@ -290,10 +308,6 @@ app.post('/createRoute', (req,res) =>{
             routename: route
         })
             .into('route')
-
-
-
-
 
 
             .then(trx.commit)
