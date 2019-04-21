@@ -24,6 +24,33 @@ app.use(bodyParser.json());
 app.use(cors());
 
 
+
+app.post('/editRider', (req,res) =>{
+
+    console.log("attempting to edit rider" );
+
+    db.from('passenger').where({name: req.body.oldName}).update({
+        name: req.body.newName,
+        email: req.body.newEmail
+    })
+        .then(x => {
+            db.select('*').from('passenger').where({name: req.body.newName})
+            .then(user =>{
+                var result = {
+                loggedIn: true,
+                userData: user[0],
+                type: 'passenger'
+            }
+                res.status(400).json(result);
+            })}
+        )
+        .catch(err => res.status(400).json('cannot edit user'))
+
+
+})
+
+
+
 app.post('/addride',(req,res) =>{
 
     db.select('van_capacity').from('vans')
