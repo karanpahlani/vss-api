@@ -58,32 +58,54 @@ app.post('/addride',(req,res) =>{
         .then( capacity=>{
             console.log(capacity)
             if(capacity[0].van_capacity >= 0) {
-                db.from('vans').where({assigned_route: req.body.route}).update({van_capacity: knex.raw('?? - 1', ['van_capacity'])})
-                    .then(van => {
-
-                        db.from('passenger').where({userid: req.body.passid}).update({
-                            activeride: req.body.route,
-                            user_balance: knex.raw('?? + 5', ['user_balance'])
+                db.select("*").from('passenger').where({userid: req.body.passid}).then(
+                    user => {
+                        db.transaction(trx => {
+                        trx.insert({
+                            passid: req.body.passid,
+                            rideid: user[0].activeride
                         })
-                            .then(user => {
-                                db.select('*').from('passenger').where({userid: req.body.passid})
-                                    .then(user => {
-                                        console.log(user);
-                                        db.select('routename').from('route')
-                                            .where('routeid', '=', user[0].activeride)
-                                            .then(routename => {
-                                                var result = {
-                                                    loggedIn: true,
-                                                    userData: user[0],
-                                                    type: 'passenger',
-                                                    routename: routename[0].routename
-                                                }
-                                                res.json(result);
-                                            })
-                                    })
-                            })
+                            .into('ridehistory')
 
+                            .then(x => {
+
+                                db.from('vans').where({assigned_route: req.body.route}).update({van_capacity: knex.raw('?? - 1', ['van_capacity'])})
+                                    .then(van => {
+
+                                        db.from('passenger').where({userid: req.body.passid}).update({
+                                            activeride: req.body.route,
+                                            user_balance: knex.raw('?? + 5', ['user_balance'])
+                                        })
+                                            .then(user => {
+                                                db.select('*').from('passenger').where({userid: req.body.passid})
+                                                    .then(user => {
+                                                        console.log(user);
+                                                        db.select('routename').from('route')
+                                                            .where('routeid', '=', user[0].activeride)
+                                                            .then(routename => {
+                                                                var result = {
+                                                                    loggedIn: true,
+                                                                    userData: user[0],
+                                                                    type: 'passenger',
+                                                                    routename: routename[0].routename
+                                                                }
+                                                                res.json(result);
+                                                            })
+                                                    })
+                                            })
+
+                                    })
+
+                                }
+                            )
+                            .then(trx.commit)
+                            .catch(trx.rollback)
                     })
+                        .catch(err => res.status(400).json('unable to add route'))
+
+                    }
+                )
+
 
             }
             else {
